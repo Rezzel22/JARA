@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Schema;
 
 Route::get('/api/projects', [ProjectController::class, 'index']);
 Route::post('/api/projects', [ProjectController::class, 'store']);
+Route::get('/api/projects/{id}/progress', [ProjectController::class, 'progress']);
 Route::post('/api/projects/{id}/members', [ProjectController::class, 'addMember']);
 Route::post('/api/tasks/{id}/assignees', [ProjectController::class, 'assignTask']);
 
@@ -45,6 +46,43 @@ it('returns 422 when the project name is missing', function () {
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['name']);
     $this->assertDatabaseCount('projects', 0);
+});
+
+it('calculates progress from completed project tasks', function () {
+    $project = Project::factory()->create();
+
+    foreach ([true, true, false] as $isDone) {
+        DB::table('tasks')->insert([
+            'project_id' => $project->id,
+            'title' => 'Project task',
+            'priority' => 'medium',
+            'deadline' => '2026-09-15',
+            'is_done' => $isDone,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    $response = $this->getJson("/api/projects/{$project->id}/progress");
+
+    $response
+        ->assertOk()
+        ->assertJsonPath('project_id', $project->id)
+        ->assertJsonPath('total_tasks', 3)
+        ->assertJsonPath('completed_tasks', 2)
+        ->assertJsonPath('progress', 66.67);
+});
+
+it('returns zero progress when a project has no tasks', function () {
+    $project = Project::factory()->create();
+
+    $response = $this->getJson("/api/projects/{$project->id}/progress");
+
+    $response
+        ->assertOk()
+        ->assertJsonPath('total_tasks', 0)
+        ->assertJsonPath('completed_tasks', 0)
+        ->assertJsonPath('progress', 0);
 });
 
 it('lists projects with their members in a stable order', function () {

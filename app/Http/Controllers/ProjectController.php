@@ -41,6 +41,24 @@ class ProjectController extends Controller
         ], Response::HTTP_CREATED);
     }
 
+    public function progress(int $id): JsonResponse
+    {
+        Project::query()->findOrFail($id);
+
+        $tasks = DB::table('tasks')->where('project_id', $id);
+        $totalTasks = $tasks->count();
+        $completedTasks = (clone $tasks)->where('is_done', true)->count();
+
+        return response()->json([
+            'project_id' => $id,
+            'total_tasks' => $totalTasks,
+            'completed_tasks' => $completedTasks,
+            'progress' => $totalTasks === 0
+                ? 0
+                : round(($completedTasks / $totalTasks) * 100, 2),
+        ]);
+    }
+
     public function addMember(Request $request, int $id): JsonResponse
     {
         $project = Project::query()->findOrFail($id);
