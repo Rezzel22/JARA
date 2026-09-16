@@ -14,6 +14,7 @@ export type TaskSummary = {
     id: number;
     project_id: number | null;
     title: string;
+    is_done: boolean;
 };
 
 export type ProjectProgress = {

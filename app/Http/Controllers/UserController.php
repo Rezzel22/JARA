@@ -3,36 +3,33 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
-    // GET /api/users
-    public function index()
+    public function index(): JsonResponse
     {
         return response()->json(User::select('id', 'name', 'email')->get());
     }
 
-    // POST /api/users
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'name'  => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'unique:users,email'],
         ]);
 
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
+        $user = User::create([
+            ...$validated,
+            'password' => Str::random(64),
+        ]);
 
-        $user = User::create($validator->validated());
-
-        return response()->json($user, 201);
+        return response()->json($user->only(['id', 'name', 'email']), 201);
     }
 
-    // DELETE /api/users/{id}
-    public function destroy(string $id)
+    public function destroy(string $id): JsonResponse
     {
         $user = User::findOrFail($id);
         $user->delete();

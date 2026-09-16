@@ -1,36 +1,44 @@
-import { useEffect, useState } from "react";
-import UserForm from "./UserForm";
+import { useState } from 'react';
+import { destroy } from '@/actions/App/Http/Controllers/UserController';
+import UserForm from './UserForm';
 
-export default function UserList() {
-  const [users, setUsers] = useState([]);
+export default function UserList({ users, error, onUsersChanged }) {
+    const [actionError, setActionError] = useState('');
 
-  const loadUsers = () => {
-    fetch("/api/users")
-      .then((res) => res.json())
-      .then((data) => setUsers(data));
-  };
+    const handleDelete = async (id) => {
+        setActionError('');
+        try {
+            const response = await fetch(destroy.url(id), {
+                method: 'DELETE',
+                headers: { Accept: 'application/json' },
+            });
+            if (!response.ok) throw new Error('User could not be deleted.');
+            await onUsersChanged();
+        } catch {
+            setActionError('User could not be deleted.');
+        }
+    };
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
+    return (
+        <div className="user-list">
+            <h2>User Management</h2>
+            <UserForm onCreated={onUsersChanged} />
+            {(error || actionError) && (
+                <p role="alert" className="text-red-600">
+                    {error || actionError}
+                </p>
+            )}
 
-  const handleDelete = (id) => {
-    fetch(`/api/users/${id}`, { method: "DELETE" }).then(() => loadUsers());
-  };
-
-  return (
-    <div className="user-list">
-      <h2>User Management</h2>
-      <UserForm onCreated={loadUsers} />
-
-      <ul>
-        {users.map((user) => (
-          <li key={user.id}>
-            {user.name} ({user.email})
-            <button onClick={() => handleDelete(user.id)}>Hapus</button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+            <ul>
+                {users.map((user) => (
+                    <li key={user.id}>
+                        {user.name} ({user.email})
+                        <button onClick={() => handleDelete(user.id)}>
+                            Hapus
+                        </button>
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
 }

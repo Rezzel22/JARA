@@ -64,6 +64,10 @@ export default defineConfig({
         singleAttributePerLine: false,
         htmlWhitespaceSensitivity: 'css',
         ignorePatterns: [
+            '.agents/**',
+            'AGENTS.md',
+            'PROJECT_MANAGER_INTEGRATION_PLAN.md',
+            'boost.json',
             '.github/**',
             'composer.json',
             'resources/js/components/ui/*',

@@ -1,29 +1,6 @@
 <?php
 
 use App\Models\Task;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-
-beforeEach(function () {
-    if (!Schema::hasTable('tasks')) {
-        Schema::create('tasks', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('project_id')->nullable();
-            $table->string('title');
-            $table->string('priority');
-            $table->date('deadline');
-            $table->boolean('is_done')->default(false);
-            $table->timestamps();
-        });
-    }
-
-    Route::get('/api/tasks', [\App\Http\Controllers\TaskController::class, 'index']);
-    Route::post('/api/tasks', [\App\Http\Controllers\TaskController::class, 'store']);
-    Route::put('/api/tasks/{id}', [\App\Http\Controllers\TaskController::class, 'update']);
-    Route::delete('/api/tasks/{id}', [\App\Http\Controllers\TaskController::class, 'destroy']);
-    Route::patch('/api/tasks/{id}/status', [\App\Http\Controllers\TaskController::class, 'toggleStatus']);
-});
 
 test('can list tasks', function () {
     Task::factory()->count(3)->create();

@@ -20,7 +20,9 @@ export default function TasksTest() {
 
     const fetchTasks = async () => {
         try {
-            const res = await fetch('/api/tasks', { headers: { Accept: 'application/json' } });
+            const res = await fetch('/api/tasks', {
+                headers: { Accept: 'application/json' },
+            });
             if (!res.ok) throw new Error('Failed to fetch tasks');
             const data = await res.json();
             setTasks(data);
@@ -30,7 +32,7 @@ export default function TasksTest() {
     };
 
     useEffect(() => {
-        fetchTasks();
+        void fetchTasks();
     }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -44,27 +46,35 @@ export default function TasksTest() {
             if (editingId) {
                 res = await fetch(`/api/tasks/${editingId}`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                    },
                     body: JSON.stringify(payload),
                 });
             } else {
                 res = await fetch('/api/tasks', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                    },
                     body: JSON.stringify(payload),
                 });
             }
 
             if (!res.ok) {
                 const errData = await res.json();
-                throw new Error(JSON.stringify(errData.errors || errData.message));
+                throw new Error(
+                    JSON.stringify(errData.errors || errData.message),
+                );
             }
 
             setTitle('');
             setPriority('medium');
             setDeadline('');
             setEditingId(null);
-            fetchTasks();
+            void fetchTasks();
         } catch (err: any) {
             setError(err.message);
         }
@@ -84,7 +94,7 @@ export default function TasksTest() {
                 headers: { Accept: 'application/json' },
             });
             if (!res.ok) throw new Error('Failed to delete task');
-            fetchTasks();
+            void fetchTasks();
         } catch (err: any) {
             setError(err.message);
         }
@@ -97,7 +107,7 @@ export default function TasksTest() {
                 headers: { Accept: 'application/json' },
             });
             if (!res.ok) throw new Error('Failed to toggle status');
-            fetchTasks();
+            void fetchTasks();
         } catch (err: any) {
             setError(err.message);
         }
@@ -106,24 +116,33 @@ export default function TasksTest() {
     return (
         <>
             <Head title="Task CRUD & Toggle Test" />
-            <div className="max-w-4xl mx-auto p-6 font-sans">
-                <h1 className="text-2xl font-bold mb-4">Task Core - CRUD & Toggle Test</h1>
+            <div className="mx-auto max-w-4xl p-6 font-sans">
+                <h1 className="mb-4 text-2xl font-bold">
+                    Task Core - CRUD & Toggle Test
+                </h1>
 
-                {error && <div className="bg-red-100 text-red-700 p-3 mb-4 rounded">{error}</div>}
+                {error && (
+                    <div className="mb-4 rounded bg-red-100 p-3 text-red-700">
+                        {error}
+                    </div>
+                )}
 
-                <form onSubmit={handleSubmit} className="bg-white p-4 shadow rounded mb-6 flex flex-gap gap-4 items-center flex-wrap">
+                <form
+                    onSubmit={handleSubmit}
+                    className="flex-gap mb-6 flex flex-wrap items-center gap-4 rounded bg-white p-4 shadow"
+                >
                     <input
                         type="text"
                         placeholder="Task title"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        className="border p-2 rounded flex-1 min-w-[200px]"
+                        className="min-w-[200px] flex-1 rounded border p-2"
                         required
                     />
                     <select
                         value={priority}
                         onChange={(e) => setPriority(e.target.value)}
-                        className="border p-2 rounded"
+                        className="rounded border p-2"
                     >
                         <option value="low">Low</option>
                         <option value="medium">Medium</option>
@@ -133,27 +152,35 @@ export default function TasksTest() {
                         type="date"
                         value={deadline}
                         onChange={(e) => setDeadline(e.target.value)}
-                        className="border p-2 rounded"
+                        className="rounded border p-2"
                         required
                     />
-                    <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
+                    <button
+                        type="submit"
+                        className="rounded bg-blue-600 px-4 py-2 text-white"
+                    >
                         {editingId ? 'Update Task' : 'Create Task'}
                     </button>
                     {editingId && (
                         <button
                             type="button"
-                            onClick={() => { setEditingId(null); setTitle(''); setPriority('medium'); setDeadline(''); }}
-                            className="bg-gray-400 text-white px-4 py-2 rounded"
+                            onClick={() => {
+                                setEditingId(null);
+                                setTitle('');
+                                setPriority('medium');
+                                setDeadline('');
+                            }}
+                            className="rounded bg-gray-400 px-4 py-2 text-white"
                         >
                             Cancel
                         </button>
                     )}
                 </form>
 
-                <div className="bg-white shadow rounded overflow-hidden">
-                    <table className="w-full text-left border-collapse">
+                <div className="overflow-hidden rounded bg-white shadow">
+                    <table className="w-full border-collapse text-left">
                         <thead>
-                            <tr className="bg-gray-100 border-b">
+                            <tr className="border-b bg-gray-100">
                                 <th className="p-3">Status</th>
                                 <th className="p-3">Title</th>
                                 <th className="p-3">Priority</th>
@@ -164,23 +191,39 @@ export default function TasksTest() {
                         <tbody>
                             {tasks.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="p-4 text-center text-gray-500">No tasks found.</td>
+                                    <td
+                                        colSpan={5}
+                                        className="p-4 text-center text-gray-500"
+                                    >
+                                        No tasks found.
+                                    </td>
                                 </tr>
                             ) : (
                                 tasks.map((task) => (
-                                    <tr key={task.id} className="border-b hover:bg-gray-50">
+                                    <tr
+                                        key={task.id}
+                                        className="border-b hover:bg-gray-50"
+                                    >
                                         <td className="p-3">
                                             <input
                                                 type="checkbox"
                                                 checked={task.is_done}
-                                                onChange={() => handleToggle(task.id)}
+                                                onChange={() =>
+                                                    handleToggle(task.id)
+                                                }
                                                 className="size-4 cursor-pointer"
                                             />
                                         </td>
-                                        <td className={`p-3 ${task.is_done ? 'line-through text-gray-400' : ''}`}>{task.title}</td>
-                                        <td className="p-3 capitalize">{task.priority}</td>
+                                        <td
+                                            className={`p-3 ${task.is_done ? 'text-gray-400 line-through' : ''}`}
+                                        >
+                                            {task.title}
+                                        </td>
+                                        <td className="p-3 capitalize">
+                                            {task.priority}
+                                        </td>
                                         <td className="p-3">{task.deadline}</td>
-                                        <td className="p-3 space-x-2">
+                                        <td className="space-x-2 p-3">
                                             <button
                                                 onClick={() => handleEdit(task)}
                                                 className="text-blue-600 hover:underline"
@@ -188,7 +231,9 @@ export default function TasksTest() {
                                                 Edit
                                             </button>
                                             <button
-                                                onClick={() => handleDelete(task.id)}
+                                                onClick={() =>
+                                                    handleDelete(task.id)
+                                                }
                                                 className="text-red-600 hover:underline"
                                             >
                                                 Delete

@@ -15,12 +15,14 @@ type ProjectListProps = {
     endpoints: ProjectEndpoints;
     users: UserSummary[];
     tasks: TaskSummary[];
+    onProjectsChanged: (projects: Project[]) => void;
 };
 
 export default function ProjectList({
     endpoints,
     users,
     tasks,
+    onProjectsChanged,
 }: ProjectListProps) {
     const [projects, setProjects] = useState<Project[]>([]);
     const [error, setError] = useState<string>();
@@ -41,13 +43,15 @@ export default function ProjectList({
                 return;
             }
 
-            setProjects((await response.json()) as Project[]);
+            const loadedProjects = (await response.json()) as Project[];
+            setProjects(loadedProjects);
+            onProjectsChanged(loadedProjects);
         } catch {
             setError('Projects could not be loaded. Please try again.');
         } finally {
             setIsLoading(false);
         }
-    }, [endpoints.index]);
+    }, [endpoints.index, onProjectsChanged]);
 
     useEffect(() => {
         void loadProjects();
@@ -70,14 +74,7 @@ export default function ProjectList({
                 <CardContent>
                     <ProjectForm
                         storeUrl={endpoints.store}
-                        onCreated={(project) =>
-                            setProjects((currentProjects) =>
-                                [...currentProjects, project].sort(
-                                    (left, right) =>
-                                        left.name.localeCompare(right.name),
-                                ),
-                            )
-                        }
+                        onCreated={() => void loadProjects()}
                     />
                 </CardContent>
             </Card>
@@ -109,6 +106,13 @@ export default function ProjectList({
                         </CardHeader>
                         <CardContent>
                             <ProjectProgress
+                                key={tasks
+                                    .filter(
+                                        (task) =>
+                                            task.project_id === project.id,
+                                    )
+                                    .map((task) => `${task.id}:${task.is_done}`)
+                                    .join(',')}
                                 projectId={project.id}
                                 progressUrl={endpoints.progress}
                             />

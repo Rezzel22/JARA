@@ -1,19 +1,8 @@
 <?php
 
-use App\Http\Controllers\ProjectController;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Route;
-
-beforeEach(function () {
-    Route::get('/api/projects', [ProjectController::class, 'index']);
-    Route::post('/api/projects', [ProjectController::class, 'store']);
-    Route::get('/api/projects/{id}/progress', [ProjectController::class, 'progress']);
-    Route::post('/api/projects/{id}/members', [ProjectController::class, 'addMember']);
-    Route::post('/api/tasks/{id}/assignees', [ProjectController::class, 'assignTask']);
-
-});
 
 it('creates a project from valid input', function () {
     $response = $this->postJson('/api/projects', [
