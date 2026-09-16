@@ -21,8 +21,4 @@ Route::middleware(['web', 'auth'])->group(function (): void {
     Route::post('/projects', [ProjectController::class, 'store']);
     Route::get('/projects/{id}/progress', [ProjectController::class, 'progress']);
     Route::post('/projects/{id}/members', [ProjectController::class, 'addMember']);
-    Route::delete('/projects/{id}/members/{userId?}', [ProjectController::class, 'removeMember']);
-
-    Route::post('/tasks/{id}/assignees', [ProjectController::class, 'assignTask']);
 });
-
