@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Task;
+use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
@@ -23,6 +23,7 @@ class TaskController extends Controller
         ]);
 
         $task = Task::create($validated);
+
         return response()->json($task, 201);
     }
 
@@ -39,6 +40,7 @@ class TaskController extends Controller
         ]);
 
         $task->update($validated);
+
         return response()->json($task);
     }
 
@@ -46,13 +48,14 @@ class TaskController extends Controller
     {
         $task = Task::findOrFail($id);
         $task->delete();
+
         return response()->json(['message' => 'Deleted']);
     }
 
     public function toggleStatus($id)
     {
         $task = Task::findOrFail($id);
-        $task->is_done = !$task->is_done;
+        $task->is_done = ! $task->is_done;
         $task->save();
 
         return response()->json($task);
