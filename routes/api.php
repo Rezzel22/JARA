@@ -11,6 +11,7 @@ Route::middleware(['web', 'auth'])->group(function (): void {
     Route::put('/tasks/{id}', [TaskController::class, 'update']);
     Route::delete('/tasks/{id}', [TaskController::class, 'destroy']);
     Route::patch('/tasks/{id}/status', [TaskController::class, 'toggleStatus']);
+    Route::post('/tasks/{id}/assignees', [ProjectController::class, 'assignTask']);
 
     Route::get('/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);
@@ -20,5 +21,8 @@ Route::middleware(['web', 'auth'])->group(function (): void {
     Route::post('/projects', [ProjectController::class, 'store']);
     Route::get('/projects/{id}/progress', [ProjectController::class, 'progress']);
     Route::post('/projects/{id}/members', [ProjectController::class, 'addMember']);
+    Route::delete('/projects/{id}/members/{userId?}', [ProjectController::class, 'removeMember']);
+
     Route::post('/tasks/{id}/assignees', [ProjectController::class, 'assignTask']);
 });
+
