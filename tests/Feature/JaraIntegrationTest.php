@@ -1,14 +1,23 @@
 <?php
 
+use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
-it('serves the public JARA page', function () {
+it('redirects guests to login before showing JARA', function () {
+    $this->get('/')->assertRedirect(route('login'));
+    $this->getJson('/api/projects')->assertUnauthorized();
+    $this->postJson('/api/tasks', [])->assertUnauthorized();
+});
+
+it('serves JARA to authenticated users', function () {
     $this->withoutVite();
+    $this->actingAs(User::factory()->create());
 
     $this->get('/')->assertOk()->assertInertia(fn (Assert $page) => $page->component('jara'));
 });
 
 it('creates and lists a user without exposing an account password', function () {
+    $this->actingAs(User::factory()->create());
     $user = $this->postJson('/api/users', [
         'name' => 'Alya',
         'email' => 'alya@example.com',
@@ -17,7 +26,7 @@ it('creates and lists a user without exposing an account password', function () 
         ->assertJsonMissingPath('password')
         ->json();
 
-    $this->getJson('/api/users')->assertOk()->assertJsonPath('0.id', $user['id']);
+    $this->getJson('/api/users')->assertOk()->assertJsonFragment(['id' => $user['id']]);
     $this->assertDatabaseHas('users', ['id' => $user['id'], 'email' => 'alya@example.com']);
 
     $this->postJson('/api/users', [
@@ -30,6 +39,7 @@ it('creates and lists a user without exposing an account password', function () 
 });
 
 it('completes the project, member, task, assignee, and progress flow', function () {
+    $this->actingAs(User::factory()->create());
     $userId = $this->postJson('/api/users', [
         'name' => 'Alya',
         'email' => 'alya@example.com',

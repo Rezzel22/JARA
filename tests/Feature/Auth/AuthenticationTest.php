@@ -19,7 +19,13 @@ test('users can authenticate using the login screen', function () {
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $response->assertRedirect(route('home', absolute: false));
+});
+
+test('authenticated users are redirected from login to JARA', function () {
+    $this->actingAs(User::factory()->create())
+        ->get(route('login'))
+        ->assertRedirect(route('home'));
 });
 
 test('users with two factor enabled are redirected to two factor challenge', function () {
@@ -59,6 +65,7 @@ test('users can logout', function () {
     $response = $this->actingAs($user)->post(route('logout'));
 
     $response->assertRedirect(route('home'));
+    $this->get(route('home'))->assertRedirect(route('login'));
 
     $this->assertGuest();
 });

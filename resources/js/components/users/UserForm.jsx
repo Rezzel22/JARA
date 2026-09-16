@@ -1,5 +1,10 @@
 import { useState } from 'react';
 import { store } from '@/actions/App/Http/Controllers/UserController';
+import InputError from '@/components/input-error';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { apiFetch } from '@/lib/api-fetch';
 
 export default function UserForm({ onCreated }) {
     const [name, setName] = useState('');
@@ -11,7 +16,7 @@ export default function UserForm({ onCreated }) {
         setError(null);
 
         try {
-            const res = await fetch(store.url(), {
+            const res = await apiFetch(store.url(), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -40,23 +45,38 @@ export default function UserForm({ onCreated }) {
     };
 
     return (
-        <form onSubmit={handleSubmit}>
-            <input
-                type="text"
-                placeholder="Nama"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-            />
-            <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-            />
-            <button type="submit">Tambah User</button>
-            {error && <p style={{ color: 'red' }}>{error}</p>}
+        <form
+            onSubmit={handleSubmit}
+            className="grid gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
+        >
+            <div className="grid gap-2">
+                <Label htmlFor="new-user-name">Name</Label>
+                <Input
+                    id="new-user-name"
+                    type="text"
+                    placeholder="Alya"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                />
+            </div>
+            <div className="grid gap-2">
+                <Label htmlFor="new-user-email">Email</Label>
+                <Input
+                    id="new-user-email"
+                    type="email"
+                    placeholder="alya@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                />
+            </div>
+            <Button type="submit">Add user</Button>
+            {error && (
+                <div className="sm:col-span-3">
+                    <InputError message={error} />
+                </div>
+            )}
         </form>
     );
 }

@@ -3,6 +3,7 @@ import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { apiFetch } from '@/lib/api-fetch';
 import {
     type Project,
     type TaskSummary,
@@ -56,7 +57,7 @@ export default function ProjectMembers({
         setIsAddingMember(true);
 
         try {
-            const response = await fetch(addMemberUrl(project.id), {
+            const response = await apiFetch(addMemberUrl(project.id), {
                 method: 'POST',
                 headers: {
                     Accept: 'application/json',
@@ -88,7 +89,7 @@ export default function ProjectMembers({
         setIsAssigning(true);
 
         try {
-            const response = await fetch(assignTaskUrl(Number(taskId)), {
+            const response = await apiFetch(assignTaskUrl(Number(taskId)), {
                 method: 'POST',
                 headers: {
                     Accept: 'application/json',

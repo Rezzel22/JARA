@@ -59,11 +59,13 @@ export default function Jara() {
     }, [loadUsers, loadTasks]);
 
     return (
-        <main className="bg-background text-foreground min-h-screen px-4 py-8 sm:px-8">
+        <div className="bg-background text-foreground flex flex-1 flex-col px-4 py-8 sm:px-8">
             <Head title="JARA" />
             <div className="mx-auto flex max-w-6xl flex-col gap-8">
-                <header>
-                    <h1 className="text-3xl font-semibold">JARA</h1>
+                <header className="border-border border-b pb-5">
+                    <h1 className="text-3xl font-semibold tracking-tight">
+                        JARA workspace
+                    </h1>
                     <p className="text-muted-foreground">
                         Projects, people, and tasks
                     </p>
@@ -86,6 +88,6 @@ export default function Jara() {
                     onTasksChanged={loadTasks}
                 />
             </div>
-        </main>
+        </div>
     );
 }

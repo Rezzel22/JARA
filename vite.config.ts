@@ -66,6 +66,7 @@ export default defineConfig({
         ignorePatterns: [
             '.agents/**',
             'AGENTS.md',
+            'README.md',
             'PROJECT_MANAGER_INTEGRATION_PLAN.md',
             'boost.json',
             '.github/**',

@@ -1,6 +1,11 @@
 <?php
 
 use App\Models\Task;
+use App\Models\User;
+
+beforeEach(function (): void {
+    $this->actingAs(User::factory()->create());
+});
 
 test('can list tasks', function () {
     Task::factory()->count(3)->create();

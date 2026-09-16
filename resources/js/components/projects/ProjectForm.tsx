@@ -3,6 +3,7 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { apiFetch } from '@/lib/api-fetch';
 import { type Project, readApiError } from './types';
 
 type ProjectFormProps = {
@@ -21,7 +22,7 @@ export default function ProjectForm({ storeUrl, onCreated }: ProjectFormProps) {
         setIsSubmitting(true);
 
         try {
-            const response = await fetch(storeUrl, {
+            const response = await apiFetch(storeUrl, {
                 method: 'POST',
                 headers: {
                     Accept: 'application/json',

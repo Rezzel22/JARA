@@ -4,6 +4,10 @@ use App\Models\Project;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
+beforeEach(function (): void {
+    $this->actingAs(User::factory()->create());
+});
+
 it('creates a project from valid input', function () {
     $response = $this->postJson('/api/projects', [
         'name' => 'Project PPK',

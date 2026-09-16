@@ -1,3 +1,6 @@
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+
 export default function TaskGroup({
     projectId,
     projectName,
@@ -7,53 +10,59 @@ export default function TaskGroup({
     onEdit,
 }) {
     return (
-        <div className="task-group" style={{ margin: '1rem 0' }}>
-            <h3>
+        <section className="space-y-3">
+            <h3 className="font-medium">
                 {projectId === 'no-project'
                     ? 'No project'
                     : (projectName ?? `Project #${projectId}`)}
             </h3>
-            <ul>
+            <ul className="divide-border divide-y rounded-lg border px-4">
                 {tasks.map((task) => (
                     <li
                         key={task.id}
-                        style={{
-                            opacity: task.is_done ? 0.5 : 1,
-                            margin: '0.5rem 0',
-                        }}
+                        className="flex flex-wrap items-center gap-3 py-3"
                     >
                         <input
                             type="checkbox"
                             checked={Boolean(task.is_done)}
                             onChange={() => onToggle(task.id)}
-                            style={{ marginRight: '0.5rem' }}
+                            aria-label={`Mark ${task.title} as ${task.is_done ? 'not done' : 'done'}`}
+                            className="accent-primary size-4"
                         />
-                        <strong
-                            style={{
-                                textDecoration: task.is_done
-                                    ? 'line-through'
-                                    : 'none',
-                            }}
-                        >
-                            {task.title}
-                        </strong>{' '}
-                        — {task.priority} — {task.deadline}
-                        {task.is_done && ' ✅'}
-                        <button
+                        <div className="min-w-0 flex-1">
+                            <p
+                                className={
+                                    task.is_done
+                                        ? 'text-muted-foreground line-through'
+                                        : 'font-medium'
+                                }
+                            >
+                                {task.title}
+                            </p>
+                            <p className="text-muted-foreground text-sm">
+                                Due {task.deadline}
+                            </p>
+                        </div>
+                        <Badge variant="secondary">{task.priority}</Badge>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
                             onClick={() => onEdit(task)}
-                            style={{ marginLeft: '1rem' }}
                         >
                             Edit
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
                             onClick={() => onDelete(task.id)}
-                            style={{ marginLeft: '0.5rem' }}
                         >
-                            Hapus
-                        </button>
+                            Delete
+                        </Button>
                     </li>
                 ))}
             </ul>
-        </div>
+        </section>
     );
 }

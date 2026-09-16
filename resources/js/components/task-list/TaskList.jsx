@@ -5,6 +5,11 @@ import {
     destroy,
     toggleStatus,
 } from '@/actions/App/Http/Controllers/TaskController';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { apiFetch } from '@/lib/api-fetch';
 import TaskGroup from './TaskGroup';
 import TaskSort from './TaskSort';
 
@@ -26,7 +31,7 @@ export default function TaskList({ tasks, projects, error, onTasksChanged }) {
         const method = editingId ? 'PUT' : 'POST';
 
         try {
-            const res = await fetch(url, {
+            const res = await apiFetch(url, {
                 method,
                 headers: {
                     'Content-Type': 'application/json',
@@ -80,7 +85,7 @@ export default function TaskList({ tasks, projects, error, onTasksChanged }) {
 
     const handleToggleStatus = async (id) => {
         try {
-            const res = await fetch(toggleStatus.url(id), {
+            const res = await apiFetch(toggleStatus.url(id), {
                 method: 'PATCH',
                 headers: { Accept: 'application/json' },
             });
@@ -93,7 +98,7 @@ export default function TaskList({ tasks, projects, error, onTasksChanged }) {
 
     const handleDelete = async (id) => {
         try {
-            const res = await fetch(destroy.url(id), {
+            const res = await apiFetch(destroy.url(id), {
                 method: 'DELETE',
                 headers: { Accept: 'application/json' },
             });
@@ -127,92 +132,122 @@ export default function TaskList({ tasks, projects, error, onTasksChanged }) {
     }, {});
 
     return (
-        <div className="task-list">
-            <h2>Task List</h2>
-            {error && <p style={{ color: 'red' }}>{error}</p>}
-
-            <form
-                onSubmit={handleSubmit}
-                style={{
-                    margin: '1rem 0',
-                    padding: '1rem',
-                    border: '1px solid #ccc',
-                }}
-            >
-                <h4>{editingId ? 'Edit Task' : 'Buat Task Baru'}</h4>
-                <div>
-                    <input
-                        type="text"
-                        placeholder="Judul Task"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        required
-                    />
-                </div>
-                <div>
-                    <select
-                        aria-label="Project"
-                        value={projectId}
-                        onChange={(e) => setProjectId(e.target.value)}
+        <Card>
+            <CardHeader>
+                <CardTitle>Tasks</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                {error && (
+                    <p
+                        role="alert"
+                        className="text-sm text-red-600 dark:text-red-400"
                     >
-                        <option value="">No project</option>
-                        {projects.map((project) => (
-                            <option key={project.id} value={project.id}>
-                                {project.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-                <div>
-                    <select
-                        value={priority}
-                        onChange={(e) => setPriority(e.target.value)}
-                    >
-                        <option value="high">High</option>
-                        <option value="medium">Medium</option>
-                        <option value="low">Low</option>
-                    </select>
-                </div>
-                <div>
-                    <input
-                        type="date"
-                        value={deadline}
-                        onChange={(e) => setDeadline(e.target.value)}
-                        required
-                    />
-                </div>
-                <button type="submit">
-                    {editingId ? 'Simpan Perubahan' : 'Tambah Task'}
-                </button>
-                {editingId && (
-                    <button
-                        type="button"
-                        onClick={handleCancelEdit}
-                        style={{ marginLeft: '0.5rem' }}
-                    >
-                        Batal
-                    </button>
+                        {error}
+                    </p>
                 )}
-                {formError && <p style={{ color: 'red' }}>{formError}</p>}
-            </form>
 
-            <TaskSort sortBy={sortBy} onChange={setSortBy} />
+                <form
+                    onSubmit={handleSubmit}
+                    className="bg-muted/40 grid gap-4 rounded-lg border p-4 sm:grid-cols-2"
+                >
+                    <h3 className="font-medium sm:col-span-2">
+                        {editingId ? 'Edit task' : 'Create task'}
+                    </h3>
+                    <div className="grid gap-2 sm:col-span-2">
+                        <Label htmlFor="task-title">Title</Label>
+                        <Input
+                            id="task-title"
+                            type="text"
+                            placeholder="Task title"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="task-project">Project</Label>
+                        <select
+                            id="task-project"
+                            className="border-input bg-background h-9 rounded-md border px-3 text-sm"
+                            value={projectId}
+                            onChange={(e) => setProjectId(e.target.value)}
+                        >
+                            <option value="">No project</option>
+                            {projects.map((project) => (
+                                <option key={project.id} value={project.id}>
+                                    {project.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="task-priority">Priority</Label>
+                        <select
+                            id="task-priority"
+                            className="border-input bg-background h-9 rounded-md border px-3 text-sm"
+                            value={priority}
+                            onChange={(e) => setPriority(e.target.value)}
+                        >
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="task-deadline">Deadline</Label>
+                        <Input
+                            id="task-deadline"
+                            type="date"
+                            value={deadline}
+                            onChange={(e) => setDeadline(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className="flex items-end gap-2">
+                        <Button type="submit">
+                            {editingId ? 'Save changes' : 'Add task'}
+                        </Button>
+                        {editingId && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handleCancelEdit}
+                            >
+                                Cancel
+                            </Button>
+                        )}
+                    </div>
+                    {formError && (
+                        <p
+                            role="alert"
+                            className="text-sm text-red-600 sm:col-span-2 dark:text-red-400"
+                        >
+                            {formError}
+                        </p>
+                    )}
+                </form>
 
-            {Object.entries(groupedByProject).map(([projectId, groupTasks]) => (
-                <TaskGroup
-                    key={projectId}
-                    projectId={projectId}
-                    projectName={
-                        projects.find(
-                            (project) => String(project.id) === projectId,
-                        )?.name
-                    }
-                    tasks={groupTasks}
-                    onToggle={handleToggleStatus}
-                    onDelete={handleDelete}
-                    onEdit={handleEdit}
-                />
-            ))}
-        </div>
+                <TaskSort sortBy={sortBy} onChange={setSortBy} />
+
+                {Object.entries(groupedByProject).map(
+                    ([projectId, groupTasks]) => (
+                        <TaskGroup
+                            key={projectId}
+                            projectId={projectId}
+                            projectName={
+                                projects.find(
+                                    (project) =>
+                                        String(project.id) === projectId,
+                                )?.name
+                            }
+                            tasks={groupTasks}
+                            onToggle={handleToggleStatus}
+                            onDelete={handleDelete}
+                            onEdit={handleEdit}
+                        />
+                    ),
+                )}
+            </CardContent>
+        </Card>
     );
 }
