@@ -2,25 +2,25 @@
 
 namespace App\Models;
 
-use Database\Factories\ProjectFactory;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-/**
- * @property int $id
- * @property string $name
- */
-#[Fillable(['name'])]
 class Project extends Model
 {
-    /** @use HasFactory<ProjectFactory> */
     use HasFactory;
 
-    public function members(): BelongsToMany
+    protected $fillable = [
+        'name',
+    ];
+
+    public function members()
     {
-        return $this->belongsToMany(User::class)
-            ->using(ProjectMember::class);
+        return $this->belongsToMany(User::class, 'project_user')
+            ->withPivot('role');
+    }
+
+    public function tasks()
+    {
+        return $this->hasMany(Task::class);
     }
 }

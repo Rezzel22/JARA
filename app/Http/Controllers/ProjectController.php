@@ -3,129 +3,88 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
-use App\Models\User;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
-use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Validator;
 
 class ProjectController extends Controller
 {
-    public function index(): JsonResponse
+    /**
+     * SRS-007: Membuat project baru dan otomatis menetapkan creator sebagai owner secara atomik.
+     */
+    public function store(Request $request)
     {
-        $projects = Project::query()
-            ->select(['id', 'name'])
-            ->with(['members' => fn ($query) => $query
-                ->select(['users.id', 'name', 'email'])
-                ->orderBy('name')
-                ->orderBy('users.id')])
-            ->orderBy('name')
-            ->orderBy('id')
-            ->get();
-
-        return response()->json($projects);
-    }
-
-    public function store(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
+        // SRS-012: Validasi Input
+        $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
         ]);
 
-        $project = Project::query()->create($validated);
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
 
-        return response()->json([
-            'id' => $project->id,
-            'name' => $project->name,
-        ], Response::HTTP_CREATED);
-    }
+        try {
+            // SRS-007 & SRS-013: Operasi Database Atomik menggunakan Transaction & Parameter Binding Eloquent
+            $project = DB::transaction(function () use ($request) {
+                $user = Auth::user();
 
-    public function progress(int $id): JsonResponse
-    {
-        Project::query()->findOrFail($id);
-
-        $tasks = DB::table('tasks')->where('project_id', $id);
-        $totalTasks = $tasks->count();
-        $completedTasks = (clone $tasks)->where('is_done', true)->count();
-
-        return response()->json([
-            'project_id' => $id,
-            'total_tasks' => $totalTasks,
-            'completed_tasks' => $completedTasks,
-            'progress' => $totalTasks === 0
-                ? 0
-                : round(($completedTasks / $totalTasks) * 100, 2),
-        ]);
-    }
-
-    public function addMember(Request $request, int $id): JsonResponse
-    {
-        $project = Project::query()->findOrFail($id);
-        $validated = $request->validate([
-            'user_id' => ['required', 'integer', 'exists:users,id'],
-        ]);
-
-        $project->members()->syncWithoutDetaching([$validated['user_id']]);
-        $project->load(['members' => fn ($query) => $query
-            ->select(['users.id', 'name', 'email'])
-            ->orderBy('name')
-            ->orderBy('users.id')]);
-
-        return response()->json([
-            'id' => $project->id,
-            'name' => $project->name,
-            'members' => $project->members,
-        ]);
-    }
-
-    public function assignTask(Request $request, int $id): JsonResponse
-    {
-        $validated = $request->validate([
-            'user_id' => ['required', 'integer', 'exists:users,id'],
-        ]);
-
-        $assignees = DB::transaction(function () use ($id, $validated) {
-            $task = DB::table('tasks')
-                ->select(['id', 'project_id'])
-                ->find($id);
-
-            if ($task === null) {
-                abort(Response::HTTP_NOT_FOUND);
-            }
-
-            if ($task->project_id === null) {
-                throw ValidationException::withMessages([
-                    'task' => 'Task must belong to a project before it can be assigned.',
+                // 1. Buat Project
+                $project = Project::create([
+                    'name' => $request->input('name'),
                 ]);
-            }
 
-            $project = Project::query()->findOrFail($task->project_id);
+                // 2. Tetapkan pembuat sebagai owner/member di tabel pivot project_user
+                $project->members()->attach($user->id, ['role' => 'owner']);
 
-            if (! $project->members()->whereKey($validated['user_id'])->exists()) {
-                throw ValidationException::withMessages([
-                    'user_id' => 'The selected user must be a member of the task project.',
-                ]);
-            }
+                return $project;
+            });
 
-            DB::table('task_user')->insertOrIgnore([
-                'task_id' => $id,
-                'user_id' => $validated['user_id'],
-            ]);
+            return response()->json($project->load('members'), 201);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Gagal membuat project', 'error' => $e->getMessage()], 500);
+        }
+    }
 
-            return User::query()
-                ->select(['id', 'name', 'email'])
-                ->whereIn('id', DB::table('task_user')
-                    ->select('user_id')
-                    ->where('task_id', $id))
-                ->orderBy('name')
-                ->orderBy('id')
-                ->get();
-        });
+    /**
+     * SRS-008 & SRS-009: Pemilik menghapus daftar/project beserta data terkait secara atomik.
+     */
+    public function destroy(string $id)
+    {
+        try {
+            return DB::transaction(function () use ($id) {
+                // SRS-013: Query aman menggunakan Eloquent findOrFail
+                $project = Project::findOrFail($id);
+                $userId = Auth::id();
 
-        return response()->json([
-            'task_id' => $id,
-            'assignees' => $assignees,
-        ]);
+                // SRS-009: Periksa kewenangan (hanya owner yang boleh menghapus)
+                $isOwner = $project->members()
+                    ->where('user_id', $userId)
+                    ->wherePivot('role', 'owner')
+                    ->exists();
+
+                if (!$isOwner) {
+                    return response()->json(['message' => 'Unauthorized. Hanya owner yang dapat menghapus project.'], 403);
+                }
+
+                // SRS-008: Cascade Deletion secara atomik
+                // 1. Hapus task assignments terkait task dalam project ini
+                $taskIds = $project->tasks()->pluck('id');
+                DB::table('task_user')->whereIn('task_id', $taskIds)->delete();
+
+                // 2. Hapus tasks terkait
+                $project->tasks()->delete();
+
+                // 3. Hapus memberships
+                $project->members()->detach();
+
+                // 4. Hapus project
+                $project->delete();
+
+                return response()->json(['message' => 'Project dan seluruh data terkait berhasil dihapus.'], 200);
+            });
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Gagal menghapus project', 'error' => $e->getMessage()], 500);
+        }
     }
 }
