@@ -16,9 +16,17 @@ export type TaskSummary = {
     title: string;
 };
 
+export type ProjectProgress = {
+    project_id: number;
+    total_tasks: number;
+    completed_tasks: number;
+    progress: number;
+};
+
 export type ProjectEndpoints = {
     index: string;
     store: string;
+    progress: (projectId: number) => string;
     addMember: (projectId: number) => string;
     assignTask: (taskId: number) => string;
 };

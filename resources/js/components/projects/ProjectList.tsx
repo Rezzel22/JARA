@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import ProjectForm from './ProjectForm';
 import ProjectMembers from './ProjectMembers';
+import ProjectProgress from './ProjectProgress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     type Project,
@@ -107,6 +108,11 @@ export default function ProjectList({
                             <CardTitle>{project.name}</CardTitle>
                         </CardHeader>
                         <CardContent>
+                            <ProjectProgress
+                                projectId={project.id}
+                                progressUrl={endpoints.progress}
+                            />
+                            <div className="my-5 border-t" />
                             <ProjectMembers
                                 project={project}
                                 users={users}
