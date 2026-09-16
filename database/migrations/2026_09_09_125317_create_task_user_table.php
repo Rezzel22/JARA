@@ -22,7 +22,7 @@ return new class extends Migration
 
             $table->primary([
                 'task_id',
-                'user_id'
+                'user_id',
             ]);
         });
     }
