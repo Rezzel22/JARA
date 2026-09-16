@@ -123,32 +123,9 @@ export default function ProjectMembers({
                 <div className="flex flex-wrap gap-2">
                     {project.members.length > 0 ? (
                         project.members.map((member) => (
-                            <div key={member.id} className="inline-flex items-center gap-1">
-                                <Badge variant="secondary">
-                                    {member.name}
-                                    <button
-                                        type="button"
-                                        className="ml-1 hover:text-red-500 font-bold"
-                                        onClick={async () => {
-                                            try {
-                                                const res = await fetch(`/api/projects/${project.id}/members/${member.id}`, {
-                                                    method: 'DELETE',
-                                                    headers: { Accept: 'application/json' },
-                                                });
-                                                if (res.ok) {
-                                                    onProjectUpdated({
-                                                        ...project,
-                                                        members: project.members.filter((m) => m.id !== member.id),
-                                                    });
-                                                }
-                                            } catch {}
-                                        }}
-                                        title="Remove member"
-                                    >
-                                        &times;
-                                    </button>
-                                </Badge>
-                            </div>
+                            <Badge key={member.id} variant="secondary">
+                                {member.name}
+                            </Badge>
                         ))
                     ) : (
                         <p className="text-muted-foreground text-sm">

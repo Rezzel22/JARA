@@ -24,7 +24,7 @@ return new class extends Migration
             $table->enum('priority', [
                 'low',
                 'medium',
-                'high',
+                'high'
             ]);
 
             $table->date('deadline');
