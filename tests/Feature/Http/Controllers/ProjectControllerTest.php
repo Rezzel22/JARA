@@ -3,29 +3,16 @@
 use App\Http\Controllers\ProjectController;
 use App\Models\Project;
 use App\Models\User;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Schema;
-
-Route::get('/api/projects', [ProjectController::class, 'index']);
-Route::post('/api/projects', [ProjectController::class, 'store']);
-Route::get('/api/projects/{id}/progress', [ProjectController::class, 'progress']);
-Route::post('/api/projects/{id}/members', [ProjectController::class, 'addMember']);
-Route::post('/api/tasks/{id}/assignees', [ProjectController::class, 'assignTask']);
 
 beforeEach(function () {
-    if (! Schema::hasTable('tasks')) {
-        Schema::create('tasks', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('project_id')->nullable();
-            $table->string('title');
-            $table->string('priority');
-            $table->date('deadline');
-            $table->boolean('is_done')->default(false);
-            $table->timestamps();
-        });
-    }
+    Route::get('/api/projects', [ProjectController::class, 'index']);
+    Route::post('/api/projects', [ProjectController::class, 'store']);
+    Route::get('/api/projects/{id}/progress', [ProjectController::class, 'progress']);
+    Route::post('/api/projects/{id}/members', [ProjectController::class, 'addMember']);
+    Route::post('/api/tasks/{id}/assignees', [ProjectController::class, 'assignTask']);
+
 });
 
 it('creates a project from valid input', function () {
@@ -83,6 +70,31 @@ it('returns zero progress when a project has no tasks', function () {
         ->assertJsonPath('total_tasks', 0)
         ->assertJsonPath('completed_tasks', 0)
         ->assertJsonPath('progress', 0);
+});
+
+it('updates progress after a project task is completed', function () {
+    $project = Project::factory()->create();
+    $taskId = DB::table('tasks')->insertGetId([
+        'project_id' => $project->id,
+        'title' => 'Finish integration',
+        'priority' => 'high',
+        'deadline' => '2026-09-15',
+        'is_done' => false,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $this->getJson("/api/projects/{$project->id}/progress")
+        ->assertOk()
+        ->assertJsonPath('progress', 0);
+
+    DB::table('tasks')->where('id', $taskId)->update(['is_done' => true]);
+
+    $this->getJson("/api/projects/{$project->id}/progress")
+        ->assertOk()
+        ->assertJsonPath('total_tasks', 1)
+        ->assertJsonPath('completed_tasks', 1)
+        ->assertJsonPath('progress', 100);
 });
 
 it('lists projects with their members in a stable order', function () {
@@ -174,6 +186,11 @@ it('assigns a project member to a task', function () {
         'task_id' => $taskId,
         'user_id' => $member->id,
     ]);
+
+    $this->postJson("/api/tasks/{$taskId}/assignees", [
+        'user_id' => $member->id,
+    ])->assertOk()->assertJsonCount(1, 'assignees');
+    $this->assertDatabaseCount('task_user', 1);
 });
 
 it('returns 422 when the assignee is not a project member', function () {

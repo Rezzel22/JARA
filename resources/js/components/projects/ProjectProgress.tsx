@@ -17,27 +17,48 @@ export default function ProjectProgress({
     const [error, setError] = useState<string>();
 
     useEffect(() => {
+        let isActive = true;
+
         async function loadProgress() {
             try {
                 const response = await fetch(progressUrl(projectId), {
                     headers: { Accept: 'application/json' },
                 });
 
-                if (!response.ok) {
-                    const apiError = await readApiError(response);
-                    setError(
-                        apiError.message ?? 'Progress could not be loaded.',
-                    );
+                if (!isActive) {
                     return;
                 }
 
-                setProgress((await response.json()) as ProjectProgressData);
+                if (!response.ok) {
+                    const apiError = await readApiError(response);
+                    if (isActive) {
+                        setError(
+                            apiError.message ?? 'Progress could not be loaded.',
+                        );
+                    }
+                    return;
+                }
+
+                const updatedProgress =
+                    (await response.json()) as ProjectProgressData;
+                if (isActive) {
+                    setProgress(updatedProgress);
+                    setError(undefined);
+                }
             } catch {
-                setError('Progress could not be loaded.');
+                if (isActive) {
+                    setError('Progress could not be loaded.');
+                }
             }
         }
 
         void loadProgress();
+        const intervalId = window.setInterval(() => void loadProgress(), 3000);
+
+        return () => {
+            isActive = false;
+            window.clearInterval(intervalId);
+        };
     }, [projectId, progressUrl]);
 
     if (error) {
